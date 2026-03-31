@@ -1,5 +1,4 @@
 package chat;
-
 import java.io.DataInputStream;
 import java.net.Socket;
 
@@ -18,20 +17,20 @@ public class ClientHandler implements Runnable {
     public void run() {
         try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
             while (!socket.isClosed()) {
-                int typeOrdinal = in.readInt();
-                String sender = in.readUTF();
-                String ip = in.readUTF();
-                int port = in.readInt();
-                String text = in.readUTF();
-
+                int typeOrdinal = in.read();
+                if (typeOrdinal == -1) break;
+                int length = in.readInt();
+                byte[] buffer = new byte[length];
+                in.readFully(buffer);
+                String content = new String(buffer, java.nio.charset.StandardCharsets.UTF_8);
+                String[] parts = content.split("\\|", 4);
                 ProtocolMessage msg = new ProtocolMessage(
-                        MessageType.values()[typeOrdinal],
-                        text, sender, ip, port
+                        MessageType.values()[typeOrdinal], parts[3], parts[0], parts[1], Integer.parseInt(parts[2])
                 );
                 handle(msg);
             }
         } catch (Exception e) {
-            manager.removePeer(peer);
+            if (!peer.isForcedClose()) manager.removePeer(peer);
         }
     }
 
@@ -41,6 +40,7 @@ public class ClientHandler implements Runnable {
             case TEXT -> manager.processIncoming(m);
             case GET_HISTORY -> manager.sendHistoryTo(peer);
             case SEND_HISTORY -> manager.applyHistory(m.getText());
+            case SYSTEM_LEAVE -> manager.removePeer(peer);
         }
     }
 }

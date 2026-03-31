@@ -1,13 +1,14 @@
 package chat;
-
 import java.io.DataOutputStream;
 import java.net.Socket;
 
 public class Peer {
     private String nickname;
     private final String address;
-    private final int port;
+    private int port;
     private DataOutputStream out;
+    private Socket socket;
+    private boolean forcedClose = false;
 
     public Peer(String nickname, String address, int port) {
         this.nickname = nickname;
@@ -16,19 +17,28 @@ public class Peer {
     }
 
     public void initStream(Socket socket) throws Exception {
+        this.socket = socket;
         this.out = new DataOutputStream(socket.getOutputStream());
     }
 
     public synchronized void send(ProtocolMessage m) throws Exception {
         if (out == null) return;
-        out.writeInt(m.getType().ordinal()); // 1. Тип сообщения
-        out.writeUTF(m.getSender());         // 2. Имя отправителя
-        out.writeUTF(m.getIp());             // 3. IP
-        out.writeInt(m.getPort());           // 4. Порт
-        out.writeUTF(m.getText());           // 5. Текст сообщения
+        out.write(m.toBytes());
         out.flush();
     }
 
+    public void close() {
+        this.forcedClose = true;
+        try {
+            if (socket != null) {
+                socket.shutdownInput();
+                socket.close();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    public boolean isForcedClose() { return forcedClose; }
+    public void setRemoteServerPort(int port) { this.port = port; }
     public String getIdentifier() { return address + ":" + port; }
     public String getNickname() { return nickname; }
     public void setNickname(String nickname) { this.nickname = nickname; }

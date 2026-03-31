@@ -16,31 +16,30 @@ public class Main {
             if (param.startsWith("--tcp-port=")) serverPort = Integer.parseInt(param.substring(11));
             if (param.startsWith("--udp-port=")) broadcastPort = Integer.parseInt(param.substring(11));
         }
-
         if (!isPortFree(hostAddr, serverPort)) {
             System.err.println("Fatal: Address " + hostAddr + ":" + serverPort + " is already occupied!");
             System.exit(1);
         }
-
         System.out.println("\nInitializing Node");
         System.out.println("Identity: " + nodeName);
         System.out.println("Host IP: " + hostAddr);
         System.out.println("TCP Port: " + serverPort);
         System.out.println("UDP Port: " + broadcastPort);
         System.out.println("\n");
-
         ChatManager manager = new ChatManager(nodeName, hostAddr, serverPort);
         manager.start(broadcastPort);
         manager.processIncoming(new ProtocolMessage(MessageType.SYSTEM_JOIN, "", nodeName, hostAddr, serverPort));
-
         java.util.Scanner input = new java.util.Scanner(System.in);
         while (input.hasNextLine()) {
             String text = input.nextLine();
-            if (text.equalsIgnoreCase("/exit")) break;
+
+            if (text.equalsIgnoreCase("/exit")) {
+                manager.stop();
+                break;
+            }
             if (!text.isEmpty()) manager.sendMessage(text);
         }
-        System.exit(0);
-    }
+        System.exit(0);}
 
     private static boolean isPortFree(String ip, int port) {
         try (ServerSocket ss = new ServerSocket()) {

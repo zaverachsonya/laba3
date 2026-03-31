@@ -16,9 +16,7 @@ public class UdpDiscoveryService implements Runnable {
             ds.setBroadcast(true);
             String packet = manager.getMyName() + ";" + manager.getMyIp() + ";" + manager.getMyPort();
             byte[] data = packet.getBytes();
-
-            DatagramPacket dp = new DatagramPacket(data, data.length,
-                    InetAddress.getByName("255.255.255.255"), udpPort);
+            DatagramPacket dp = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), udpPort);
             ds.send(dp);
         } catch (Exception e) {
             System.err.println("UDP Send Error: " + e.getMessage());
