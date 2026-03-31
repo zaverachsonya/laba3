@@ -54,7 +54,7 @@ public class UdpDiscoveryService implements Runnable {
         while (true) {
             announce();
             try {
-                Thread.sleep(5000);
+                Thread.sleep(8000);
             } catch (InterruptedException e) {
                 break;
             }
